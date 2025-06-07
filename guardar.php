@@ -1,26 +1,31 @@
 <?php
-require 'config.php';
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nombre = trim($_POST['nombre']);
-    $email = trim($_POST['email']);
-    $contraseña = password_hash($_POST['contraseña'], PASSWORD_DEFAULT);
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json");
 
-    // Validaciones básicas
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        die("Correo inválido.");
-    }
+$data = json_decode(file_get_contents("php://input"), true);
 
-    $stmt = $conn->prepare("INSERT INTO usuarios (nombre, email, contraseña) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $nombre, $email, $contraseña);
+$host = "sql111.infinityfree.com";
+$user = "if0_39176586";
+$password = "2FtilBwIf7t";
+$dbname = "if0_39176586_DatosUsuarios";
 
-    if ($stmt->execute()) {
-        echo "¡Usuario registrado con éxito!";
-    } else {
-        echo "Error al registrar: " . $conn->error;
-    }
-    $stmt->close();
-    $conn->close();
-} else {
-    echo "Acceso no permitido.";
+$conn = new mysqli($host, $user, $password, $dbname);
+
+if ($conn->connect_error) {
+    die(json_encode(["error" => "Conexión fallida: " . $conn->connect_error]));
 }
+
+$nombre = $conn->real_escape_string($data["nombre"]);
+$email = $conn->real_escape_string($data["email"]);
+
+$sql = "INSERT INTO usuarios (nombre, email) VALUES ('$nombre', '$email')";
+
+if ($conn->query($sql) === TRUE) {
+    echo json_encode(["mensaje" => "Datos guardados correctamente"]);
+} else {
+    echo json_encode(["error" => "Error al guardar: " . $conn->error]);
+}
+
+$conn->close();
 ?>
